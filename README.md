@@ -13,10 +13,23 @@ python3 -m http.server 8000
 ## 구조
 
 ```
-index.html      메인 페이지 (사무소 소개, 업무 안내, 상담 신청, 오시는 길 등)
-css/style.css   전체 스타일 (반응형 포함)
-js/main.js      모바일 메뉴, 아코디언(FAQ), 상담 폼, 스크롤 애니메이션
+index.html            메인 페이지 (사무소 소개, 업무 안내, 상담 신청, 오시는 길 등)
+css/style.css         전체 스타일 (반응형 포함)
+js/main.js            모바일 메뉴, 아코디언(FAQ), 상담 폼(Supabase 연동), 스크롤 애니메이션
+js/vendor/supabase.js Supabase JS 클라이언트 (v2.110.7, CDN 의존성 없이 로컬에 포함)
+supabase/schema.sql   상담 신청(inquiries) 테이블 생성 SQL
 ```
+
+## Supabase 연동 (상담 신청 폼)
+
+상담 신청 폼은 Supabase의 `inquiries` 테이블에 저장되도록 연동되어 있습니다.
+
+1. Supabase 대시보드 → 해당 프로젝트 → **SQL Editor**로 이동합니다.
+2. `supabase/schema.sql` 내용을 그대로 실행해 `inquiries` 테이블과 익명 사용자의 INSERT를 허용하는 RLS 정책을 생성합니다.
+3. `index.html`에 이미 프로젝트 URL과 publishable(anon) key가 설정되어 있습니다. publishable key는 공개적으로 노출되도록 설계된 키이므로 클라이언트 코드에 그대로 두어도 안전합니다.
+4. 접수된 상담 신청 내역은 Supabase 대시보드의 **Table Editor → inquiries**에서 확인합니다 (RLS 정책상 익명 사용자는 등록만 가능하고 조회는 불가능합니다).
+
+> secret(service_role) key는 절대 클라이언트 코드나 저장소에 포함하지 마세요. DDL(테이블 생성) 등 관리자 작업은 반드시 대시보드 SQL Editor에서 직접 수행해야 합니다.
 
 ## 반영이 필요한 placeholder 정보
 
@@ -26,7 +39,7 @@ js/main.js      모바일 메뉴, 아코디언(FAQ), 상담 폼, 스크롤 애�
 - 대표 전화 / 팩스 / 이메일 주소
 - 사무소 실제 주소 및 지도 (현재 `오시는 길` 영역은 실제 지도 API 없이 자리표시자로 제작되어 있습니다. 네이버지도/구글맵 iframe 임베드 코드로 교체하면 됩니다)
 - 대표 세무사 프로필 사진 (`.about__photo` 영역, 현재는 그라디언트 플레이스홀더)
-- 상담 신청 폼(`#contactForm`)은 현재 클라이언트 사이드에서만 동작하는 데모이며, 실제 접수를 받으려면 이메일 전송 API 또는 백엔드 연동이 필요합니다.
+- 상담 신청 폼(`#contactForm`)은 Supabase `inquiries` 테이블에 저장되도록 연동되어 있습니다. 위 "Supabase 연동" 절의 SQL을 먼저 실행해야 정상 동작합니다.
 
 ## 참고 사항
 

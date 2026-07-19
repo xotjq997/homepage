@@ -64,7 +64,12 @@
     });
   }
 
-  // Contact form (client-side only demo submission)
+  // Contact form -> Supabase (public "inquiries" table, insert-only via publishable key)
+  var sbClient = null;
+  if (window.supabase && window.SUPABASE_URL && window.SUPABASE_ANON_KEY) {
+    sbClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  }
+
   var form = document.getElementById("contactForm");
   var status = document.getElementById("formStatus");
   if (form && status) {
@@ -74,11 +79,39 @@
         form.reportValidity();
         return;
       }
+
       var name = document.getElementById("name").value.trim();
-      status.textContent = name
-        ? name + "님, 상담 신청이 접수되었습니다. 빠르게 연락드리겠습니다."
-        : "상담 신청이 접수되었습니다. 빠르게 연락드리겠습니다.";
-      form.reset();
+      var payload = {
+        name: name,
+        phone: document.getElementById("phone").value.trim(),
+        topic: document.getElementById("topic").value,
+        message: document.getElementById("message").value.trim()
+      };
+
+      var submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+      status.textContent = "접수 중입니다...";
+
+      if (!sbClient) {
+        status.textContent = "상담 신청 접수에 실패했습니다. 잠시 후 다시 시도해 주시거나 전화로 문의해 주세요.";
+        if (submitBtn) submitBtn.disabled = false;
+        return;
+      }
+
+      sbClient
+        .from("inquiries")
+        .insert([payload])
+        .then(function (result) {
+          if (submitBtn) submitBtn.disabled = false;
+          if (result.error) {
+            status.textContent = "상담 신청 접수에 실패했습니다. 잠시 후 다시 시도해 주시거나 전화로 문의해 주세요.";
+            return;
+          }
+          status.textContent = name
+            ? name + "님, 상담 신청이 접수되었습니다. 빠르게 연락드리겠습니다."
+            : "상담 신청이 접수되었습니다. 빠르게 연락드리겠습니다.";
+          form.reset();
+        });
     });
   }
 
