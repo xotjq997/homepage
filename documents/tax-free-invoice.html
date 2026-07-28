@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>계산서(면세) 양식 - 동로세무회계</title>
+<meta name="description" content="면세 거래에 사용하는 계산서(부가가치세법 시행규칙 별지 제25호 서식 기반) 양식입니다. 화면에서 바로 입력한 뒤 인쇄할 수 있습니다.">
+<style>
+  :root{
+    --navy-900:#0b1f36;
+    --navy-800:#0f2a4a;
+    --gold-500:#c9974d;
+    --gray-700:#4b5563;
+    --gray-300:#d1d5db;
+    --gray-100:#f3f4f6;
+    --gray-50:#f8f9fb;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family:"Malgun Gothic","Apple SD Gothic Neo",-apple-system,BlinkMacSystemFont,sans-serif;
+    color:#111827;
+    background:var(--gray-100);
+    padding:24px;
+  }
+
+  /* Toolbar */
+  .toolbar{
+    max-width:900px;
+    margin:0 auto 16px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .toolbar__title{ font-size:15px; font-weight:700; color:var(--navy-900); }
+  .toolbar__actions{ display:flex; flex-wrap:wrap; gap:8px; }
+  .toolbar select,
+  .toolbar button{
+    font-family:inherit;
+    font-size:13px;
+    border-radius:6px;
+    border:1px solid var(--gray-300);
+    background:#fff;
+    padding:8px 12px;
+    cursor:pointer;
+  }
+  .toolbar button.primary{
+    background:var(--navy-800);
+    border-color:var(--navy-800);
+    color:#fff;
+    font-weight:600;
+  }
+  .toolbar__hint{
+    max-width:900px;
+    margin:0 auto 20px;
+    font-size:12.5px;
+    color:var(--gray-700);
+    line-height:1.6;
+  }
+
+  /* Invoice sheet */
+  .sheet{
+    max-width:900px;
+    margin:0 auto 32px;
+    background:#fff;
+    border:2px solid #111827;
+    padding:28px 32px;
+  }
+  .sheet__copy-label{
+    text-align:right;
+    font-size:12px;
+    color:var(--gray-700);
+    margin-bottom:4px;
+  }
+  .sheet__title{
+    text-align:center;
+    font-size:26px;
+    font-weight:800;
+    letter-spacing:8px;
+    margin:4px 0 4px;
+  }
+  .sheet__subtitle{
+    text-align:center;
+    font-size:12px;
+    color:var(--gray-700);
+    margin:0 0 18px;
+  }
+
+  table.info{
+    width:100%;
+    border-collapse:collapse;
+    margin-bottom:14px;
+  }
+  table.info th, table.info td{
+    border:1px solid #111827;
+    padding:6px 8px;
+    font-size:13px;
+    vertical-align:middle;
+  }
+  table.info th{
+    background:var(--gray-50);
+    font-weight:700;
+    width:110px;
+    white-space:nowrap;
+  }
+  table.info td[contenteditable="true"]{
+    min-width:60px;
+  }
+  table.info td.party-label{
+    width:36px;
+    text-align:center;
+    font-weight:800;
+    background:var(--gray-50);
+  }
+
+  table.items{
+    width:100%;
+    border-collapse:collapse;
+    margin-bottom:10px;
+  }
+  table.items th, table.items td{
+    border:1px solid #111827;
+    padding:6px 6px;
+    font-size:12.5px;
+    text-align:center;
+  }
+  table.items thead th{ background:var(--gray-50); font-weight:700; }
+  table.items td[contenteditable="true"]{ min-height:20px; text-align:left; }
+  table.items td.num{ text-align:right; }
+  table.items td.del-cell{ width:26px; }
+  table.items td.del-cell button{
+    border:none;
+    background:transparent;
+    color:#b91c1c;
+    cursor:pointer;
+    font-size:14px;
+    line-height:1;
+  }
+  .items-foot{
+    display:flex;
+    justify-content:flex-end;
+    margin-bottom:16px;
+  }
+  .items-foot button{
+    font-size:12.5px;
+    border:1px dashed var(--gray-300);
+    background:#fff;
+    border-radius:6px;
+    padding:5px 10px;
+    cursor:pointer;
+  }
+
+  .total-row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    border:1px solid #111827;
+    padding:10px 12px;
+    margin-bottom:18px;
+    font-size:14px;
+  }
+  .total-row strong{ white-space:nowrap; }
+  .total-row .total-amount{
+    flex:1;
+    text-align:right;
+    font-weight:800;
+    font-size:16px;
+    min-width:60px;
+  }
+
+  .settlement{
+    display:flex;
+    flex-wrap:wrap;
+    gap:24px;
+    align-items:center;
+    font-size:13px;
+    margin-bottom:20px;
+  }
+  .settlement label{ display:inline-flex; align-items:center; gap:4px; cursor:pointer; }
+
+  .sign-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    font-size:13px;
+  }
+  .sign-row .field{ display:flex; align-items:center; gap:6px; }
+  .sign-row .field span[contenteditable="true"]{
+    display:inline-block;
+    min-width:70px;
+    border-bottom:1px solid #111827;
+    padding:0 4px;
+  }
+
+  [contenteditable="true"]{ outline:none; }
+  [contenteditable="true"]:hover{ background:#fffbea; }
+  [contenteditable="true"]:focus{ background:#fff3cd; }
+  [contenteditable="true"]:empty::before{
+    content:attr(data-placeholder);
+    color:#9ca3af;
+  }
+
+  .no-print{}
+
+  @media print{
+    body{ background:#fff; padding:0; }
+    .toolbar, .toolbar__hint{ display:none !important; }
+    .sheet{ border:2px solid #111827; margin:0 auto; box-shadow:none; }
+    .no-print{ display:none !important; }
+    [contenteditable="true"]:hover, [contenteditable="true"]:focus{ background:transparent; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <span class="toolbar__title">계산서(면세) 양식</span>
+  <div class="toolbar__actions">
+    <select id="copyType" aria-label="보관용 구분">
+      <option value="공급자 보관용">공급자 보관용</option>
+      <option value="공급받는자 보관용">공급받는자 보관용</option>
+    </select>
+    <button type="button" id="calcTotalBtn">공급가액 합계 계산</button>
+    <button type="button" class="primary" id="printBtn">인쇄 / PDF 저장</button>
+  </div>
+</div>
+<p class="toolbar__hint no-print">
+  본 양식은 부가가치세가 면제되는 재화·용역 거래(면세 거래) 시 사용하는 <strong>계산서</strong> 양식입니다.
+  세금계산서와 달리 부가가치세(세액) 항목이 없습니다. 각 칸을 클릭해 내용을 입력한 뒤 우측 상단의 인쇄 버튼으로 출력하거나 PDF로 저장하세요.
+  실제 신고·증빙용으로는 홈택스 전자(면세)계산서 발급을 권장합니다.
+</p>
+
+<div class="sheet" id="sheet">
+  <p class="sheet__copy-label" id="copyLabel">공급자 보관용</p>
+  <p class="sheet__title">계산서</p>
+  <p class="sheet__subtitle">(부가가치세 면세 거래用)</p>
+
+  <table class="info">
+    <tbody>
+      <tr>
+        <td class="party-label" rowspan="4">공<br>급<br>자</td>
+        <th>등록번호</th>
+        <td colspan="3" contenteditable="true" data-placeholder="000-00-00000"></td>
+      </tr>
+      <tr>
+        <th>상호(법인명)</th>
+        <td contenteditable="true" data-placeholder="동로세무회계"></td>
+        <th>성명(대표자)</th>
+        <td contenteditable="true" data-placeholder="홍길동">&nbsp;(인)</td>
+      </tr>
+      <tr>
+        <th>사업장 주소</th>
+        <td colspan="3" contenteditable="true" data-placeholder="서울특별시 강남구 테헤란로 000, 0층"></td>
+      </tr>
+      <tr>
+        <th>업태</th>
+        <td contenteditable="true" data-placeholder="서비스"></td>
+        <th>종목</th>
+        <td contenteditable="true" data-placeholder="세무·회계 자문"></td>
+      </tr>
+      <tr>
+        <td class="party-label" rowspan="4">공<br>급<br>받<br>는<br>자</td>
+        <th>등록번호</th>
+        <td colspan="3" contenteditable="true" data-placeholder="000-00-00000"></td>
+      </tr>
+      <tr>
+        <th>상호(법인명)</th>
+        <td contenteditable="true" data-placeholder=""></td>
+        <th>성명(대표자)</th>
+        <td contenteditable="true" data-placeholder="">&nbsp;(인)</td>
+      </tr>
+      <tr>
+        <th>사업장 주소</th>
+        <td colspan="3" contenteditable="true" data-placeholder=""></td>
+      </tr>
+      <tr>
+        <th>업태</th>
+        <td contenteditable="true" data-placeholder=""></td>
+        <th>종목</th>
+        <td contenteditable="true" data-placeholder=""></td>
+      </tr>
+      <tr>
+        <th>작성일자</th>
+        <td contenteditable="true" data-placeholder="20  년   월   일"></td>
+        <th>공급가액 합계</th>
+        <td contenteditable="true" id="totalHeaderAmount" data-placeholder="0"></td>
+      </tr>
+      <tr>
+        <th>비고</th>
+        <td colspan="3" contenteditable="true" data-placeholder=""></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="items">
+    <thead>
+      <tr>
+        <th style="width:8%">월</th>
+        <th style="width:8%">일</th>
+        <th style="width:20%">품목</th>
+        <th style="width:12%">규격</th>
+        <th style="width:8%">수량</th>
+        <th style="width:12%">단가</th>
+        <th style="width:16%">공급가액</th>
+        <th style="width:12%">비고</th>
+        <th class="no-print" style="width:4%"></th>
+      </tr>
+    </thead>
+    <tbody id="itemsBody">
+      <tr>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true" class="num"></td>
+        <td contenteditable="true" class="num"></td>
+        <td contenteditable="true" class="num amount-cell"></td>
+        <td contenteditable="true"></td>
+        <td class="del-cell no-print"><button type="button" class="del-row-btn" title="행 삭제">✕</button></td>
+      </tr>
+      <tr>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true" class="num"></td>
+        <td contenteditable="true" class="num"></td>
+        <td contenteditable="true" class="num amount-cell"></td>
+        <td contenteditable="true"></td>
+        <td class="del-cell no-print"><button type="button" class="del-row-btn" title="행 삭제">✕</button></td>
+      </tr>
+      <tr>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true"></td>
+        <td contenteditable="true" class="num"></td>
+        <td contenteditable="true" class="num"></td>
+        <td contenteditable="true" class="num amount-cell"></td>
+        <td contenteditable="true"></td>
+        <td class="del-cell no-print"><button type="button" class="del-row-btn" title="행 삭제">✕</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="items-foot no-print">
+    <button type="button" id="addRowBtn">+ 항목 행 추가</button>
+  </div>
+
+  <div class="total-row">
+    <strong>합계금액</strong>
+    <span class="total-amount" id="totalAmount" contenteditable="true" data-placeholder="0"></span>
+    <strong>원</strong>
+  </div>
+
+  <div class="settlement">
+    <span>결제 방법</span>
+    <label><input type="checkbox">현금</label>
+    <label><input type="checkbox">수표</label>
+    <label><input type="checkbox">어음</label>
+    <label><input type="checkbox">외상미수금</label>
+  </div>
+
+  <div class="sign-row">
+    <div class="field">위 금액을 <span contenteditable="true" data-placeholder="영수/청구">영수</span>함</div>
+    <div class="field">인수자 : <span contenteditable="true" data-placeholder="(서명)"></span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var copyType = document.getElementById('copyType');
+  var copyLabel = document.getElementById('copyLabel');
+  copyType.addEventListener('change', function(){
+    copyLabel.textContent = copyType.value;
+  });
+
+  document.getElementById('printBtn').addEventListener('click', function(){
+    window.print();
+  });
+
+  document.getElementById('addRowBtn').addEventListener('click', function(){
+    var body = document.getElementById('itemsBody');
+    var lastRow = body.rows[body.rows.length - 1];
+    var newRow = lastRow.cloneNode(true);
+    Array.prototype.forEach.call(newRow.querySelectorAll('[contenteditable="true"]'), function(cell){
+      cell.textContent = '';
+    });
+    body.appendChild(newRow);
+    var firstCell = newRow.querySelector('[contenteditable="true"]');
+    if (firstCell) firstCell.focus();
+  });
+
+  document.getElementById('itemsBody').addEventListener('click', function(e){
+    var btn = e.target.closest('.del-row-btn');
+    if (!btn) return;
+    var body = document.getElementById('itemsBody');
+    if (body.rows.length <= 1) return;
+    btn.closest('tr').remove();
+  });
+
+  function parseAmount(text){
+    var n = parseFloat(String(text).replace(/[^0-9.-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  }
+
+  document.getElementById('calcTotalBtn').addEventListener('click', function(){
+    var cells = document.querySelectorAll('#itemsBody .amount-cell');
+    var sum = 0;
+    cells.forEach(function(cell){ sum += parseAmount(cell.textContent); });
+    var formatted = sum.toLocaleString('ko-KR');
+    document.getElementById('totalAmount').textContent = formatted;
+    document.getElementById('totalHeaderAmount').textContent = formatted;
+  });
+})();
+</script>
+
+</body>
+</html>
